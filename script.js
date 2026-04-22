@@ -1,4 +1,3 @@
-console.log("✅ Duplicate Fob Filter script loaded");
 // ==================================================
 // GLOBAL STATE
 // ==================================================
@@ -44,7 +43,7 @@ function handleAnalyze() {
   document.getElementById("exportCleanBtn").disabled = true;
   document.getElementById("exportSummaryBtn").disabled = true;
 
-  showStatus(`🔄 Processing ${files.length} files...`, "info");
+  showStatus(`🔄 Analyzing ${files.length} file(s)...`, "info");
 
   Array.from(files).forEach(file => parseFile(file));
 }
@@ -57,7 +56,7 @@ function parseFile(file) {
 
   if (ext === "csv") {
     Papa.parse(file, {
-      header: false,
+      header: true,
       skipEmptyLines: true,
       complete: r => handleParsedRows(file, r.data)
     });
@@ -76,12 +75,9 @@ function parseExcelFile(file) {
       { type: "array" }
     );
 
-    const sheet =
-      workbook.Sheets[workbook.SheetNames[0]];
-
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      blankrows: false
+      defval: ""
     });
 
     handleParsedRows(file, rows);
@@ -91,35 +87,28 @@ function parseExcelFile(file) {
 }
 
 // ==================================================
-// ROW NORMALIZATION
+// NORMALIZE ROWS
 // ==================================================
 function handleParsedRows(file, rows) {
-  if (!rows || rows.length < 2) {
-    markFileComplete();
-    return;
-  }
+  rows.forEach(row => {
+    const fob =
+      row["fob_number"] ||
+      row["Fob Number"] ||
+      row["FobNumber"] ||
+      row["fob"];
 
-  const headers = rows[0].map(h =>
-    h ? h.toString().toLowerCase().trim() : ""
-  );
-
-  const fobIndex = headers.findIndex(h =>
-    h === "fob_number" || h === "fob" || h === "fobnumber"
-  );
-
-  if (fobIndex === -1) {
-    markFileComplete();
-    return;
-  }
-
-  rows.slice(1).forEach(row => {
-    const fobVal = row[fobIndex];
-    if (!fobVal) return;
+    if (!fob) return;
 
     combinedRows.push({
       sourceFile: file.name,
-      fob: fobVal.toString().trim(),
-      row
+      fob: fob.toString().trim(),
+      name: row["name"] || row["Name"] || "",
+      make: row["Make"] || row["Make_att"] || "",
+      model: row["Model"] || row["Model_att"] || "",
+      year: row["Year"] || row["Year_att"] || "",
+      extColor: row["Ext Color"] || row["Ext. Color_att"] || "",
+      intColor: row["Int Color"] || row["Int. Color_att"] || "",
+      vin: row["VIN"] || row["VIN_att"] || ""
     });
   });
 
@@ -131,19 +120,19 @@ function handleParsedRows(file, rows) {
 // ==================================================
 function markFileComplete() {
   filesProcessed++;
-  const totalFiles =
+  const total =
     document.getElementById("fileInput").files.length;
 
-  if (filesProcessed >= totalFiles) {
+  if (filesProcessed >= total) {
     processDuplicates();
   }
 }
 
 // ==================================================
-// DUPLICATE PROCESSING (NEW BEHAVIOR)
+// DUPLICATE FILTERING (FINAL LOGIC)
 // ==================================================
 function processDuplicates() {
-  // Group by fob
+  // Group by fob number
   combinedRows.forEach(r => {
     if (!fobGroups[r.fob]) fobGroups[r.fob] = [];
     fobGroups[r.fob].push(r);
@@ -153,18 +142,20 @@ function processDuplicates() {
     const group = fobGroups[fob];
 
     if (group.length === 1) {
-      // ✅ Valid, unique fob
+      // ✅ Keep unique fobs
       cleanRows.push(group[0]);
     } else {
-      // ❌ Duplicate → exclude ALL
-      const sources = [...new Set(
-        group.map(r => r.sourceFile)
-      )];
+      // ❌ Remove all duplicates
+      const sources = [...new Set(group.map(r => r.sourceFile))];
+      const assetNames = group
+        .map(r => r.name)
+        .filter(v => v && v.trim() !== "");
 
       duplicateSummary.push({
         fob,
         occurrences: group.length,
-        sources
+        sources,
+        assetNames
       });
     }
   });
@@ -177,54 +168,78 @@ function processDuplicates() {
 // ==================================================
 function finalizeStatus() {
   const total = combinedRows.length;
-  const accepted = cleanRows.length;
+  const kept = cleanRows.length;
   const skipped = duplicateSummary.reduce(
-    (sum, d) => sum + d.occurrences, 0
+    (sum, d) => sum + d.occurrences,
+    0
   );
 
   showStatus(
     `✅ Files processed: ${filesProcessed}<br>
      📦 Total records scanned: ${total}<br>
-     ✅ Included (unique fobs): ${accepted}<br>
+     ✅ Included (unique fobs): ${kept}<br>
      ❌ Skipped (duplicate fobs): ${skipped}<br>
      ⚠️ Duplicate fob numbers: ${duplicateSummary.length}`,
     "success"
   );
 
-  document.getElementById("exportCleanBtn").disabled = accepted === 0;
+  document.getElementById("exportCleanBtn").disabled = kept === 0;
   document.getElementById("exportSummaryBtn").disabled =
     duplicateSummary.length === 0;
 }
 
 // ==================================================
-// EXPORT: CLEAN INVENTORY
+// EXPORT: CLEAN INVENTORY (WITH HEADERS)
 // ==================================================
 function exportCleanInventory() {
   if (cleanRows.length === 0) return;
 
   const output = [];
-  output.push(cleanRows[0].row.map((_, i) => `Column${i+1}`));
 
-  cleanRows.forEach(r => output.push(r.row));
+  // ✅ REQUIRED HEADER ORDER
+  output.push([
+    "Name",
+    "Make",
+    "Model",
+    "Year",
+    "Ext Color",
+    "Int Color",
+    "VIN",
+    "Fob Number"
+  ]);
+
+  cleanRows.forEach(r => {
+    output.push([
+      r.name,
+      r.make,
+      r.model,
+      r.year,
+      r.extColor,
+      r.intColor,
+      r.vin,
+      r.fob
+    ]);
+  });
 
   downloadCSV(output, "combined_inventory_clean.csv");
 }
 
 // ==================================================
-// EXPORT: DUPLICATE SUMMARY
+// EXPORT: DUPLICATE FOB SUMMARY
 // ==================================================
 function exportDuplicateSummary() {
   if (duplicateSummary.length === 0) return;
 
   const output = [
-    ["FobNumber", "Occurrences", "SourceFiles"]
+    ["FobNumber", "Occurrences", "SourceFiles", "AssetNames"]
   ];
 
   duplicateSummary.forEach(d => {
     output.push([
       d.fob,
       d.occurrences,
-      d.sources.join(" | ")
+      d.sources.join(" | "),
+      d.assetNames.join(" | ")
     ]);
   });
 
@@ -237,8 +252,8 @@ function exportDuplicateSummary() {
 function downloadCSV(data, filename) {
   const csv = Papa.unparse(data);
   const blob = new Blob([csv], { type: "text/csv" });
-  const link = document.createElement("a");
 
+  const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
@@ -252,3 +267,4 @@ function showStatus(message, type) {
   if (!area) return;
   area.innerHTML = `<p class="${type}">${message}</p>`;
 }
+``
