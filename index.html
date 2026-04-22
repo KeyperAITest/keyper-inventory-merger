@@ -2,41 +2,94 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
   <title>Inventory Merger & Fob Resolver</title>
 
-  <!-- Branding -->
+  <!-- ✅ Keyper Branding / Favicons -->
   <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <!-- ✅ Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<header>
-  <h2>Inventory Merger & Fob Resolver</h2>
-  <p>Combine multiple inventory exports and resolve duplicate Fobs</p>
-</header>
+  <!-- ✅ Header -->
+  <header style="
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    border-bottom: 3px solid #0b5aa5;
+    background-color: #ffffff;
+  ">
+    <a
+      href="https://KeyperSystems.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="display:inline-flex; align-items:center;"
+    >
+      <img
+        src="KeyperLogo.webp"
+        alt="Keyper Systems"
+        style="height: 40px; width: auto;"
+      >
+    </a>
 
-<main>
-  <h3>Upload Inventory Files</h3>
+    <div>
+      <div style="font-size: 18px; font-weight: 600;">
+        Inventory Merger & Fob Resolver
+      </div>
+      <div style="font-size: 12px; color: #6a737d;">
+        Combine multiple inventory exports and resolve duplicate Fobs
+      </div>
+    </div>
+  </header>
 
-  <input
-    type="file"
-    id="fileInput"
-    multiple
-    accept=".csv,.xls,.xlsx"
-  >
+  <!-- ✅ Main Content -->
+  <main style="padding: 20px;">
 
-  <button id="analyzeBtn">
-    Analyze Files
-  </button>
+    <h3>Upload Inventory Files</h3>
 
-  <div id="statusArea"></div>
-</main>
+    <input
+      type="file"
+      id="fileInput"
+      multiple
+      accept=".csv,.xls,.xlsx"
+    >
 
-<!-- CSV + Excel parsing (same libs you already trust) -->
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <button id="analyzeBtn" style="margin-left:10px;">
+      Analyze Files
+    </button>
 
-<script src="script.js"></script>
+    <!-- ✅ Status Area -->
+    <div id="statusArea" style="margin-top:15px;"></div>
+
+    <!-- ✅ Duplicate Resolution UI -->
+    <div id="duplicateArea" style="margin-top:25px;"></div>
+
+    <!-- ✅ Export Button -->
+    <button
+      id="exportBtn"
+      disabled
+      style="margin-top:20px;"
+    >
+      Export Combined Inventory
+    </button>
+
+  </main>
+
+  <!-- ✅ PapaParse (CSV Parsing) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- ✅ SheetJS (Excel Parsing) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- ✅ App Logic -->
+  <script src="script.js"></script>
+
 </body>
 </html>
