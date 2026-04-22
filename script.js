@@ -5,20 +5,21 @@ let combinedRows = [];
 let filesProcessed = 0;
 
 let fobGroups = {};
-let duplicateFobGroups = [];
-let uniqueFobRows = [];
+let cleanRows = [];
+let duplicateSummary = [];
 
 // ==================================================
 // EVENT WIRING
 // ==================================================
 document.addEventListener("DOMContentLoaded", () => {
-  document
-    .getElementById("analyzeBtn")
+  document.getElementById("analyzeBtn")
     ?.addEventListener("click", handleAnalyze);
 
-  document
-    .getElementById("exportBtn")
-    ?.addEventListener("click", handleExport);
+  document.getElementById("exportCleanBtn")
+    ?.addEventListener("click", exportCleanInventory);
+
+  document.getElementById("exportSummaryBtn")
+    ?.addEventListener("click", exportDuplicateSummary);
 });
 
 // ==================================================
@@ -36,11 +37,11 @@ function handleAnalyze() {
   combinedRows = [];
   filesProcessed = 0;
   fobGroups = {};
-  duplicateFobGroups = [];
-  uniqueFobRows = [];
+  cleanRows = [];
+  duplicateSummary = [];
 
-  document.getElementById("duplicateArea").innerHTML = "";
-  document.getElementById("exportBtn").disabled = true;
+  document.getElementById("exportCleanBtn").disabled = true;
+  document.getElementById("exportSummaryBtn").disabled = true;
 
   showStatus(`🔄 Processing ${files.length} files...`, "info");
 
@@ -48,7 +49,7 @@ function handleAnalyze() {
 }
 
 // ==================================================
-// FILE PARSING
+// FILE PARSING (CSV + EXCEL)
 // ==================================================
 function parseFile(file) {
   const ext = file.name.split(".").pop().toLowerCase();
@@ -68,14 +69,15 @@ function parseFile(file) {
 
 function parseExcelFile(file) {
   const reader = new FileReader();
-
   reader.onload = e => {
     const workbook = XLSX.read(
       new Uint8Array(e.target.result),
       { type: "array" }
     );
 
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const sheet =
+      workbook.Sheets[workbook.SheetNames[0]];
+
     const rows = XLSX.utils.sheet_to_json(sheet, {
       header: 1,
       blankrows: false
@@ -116,9 +118,7 @@ function handleParsedRows(file, rows) {
     combinedRows.push({
       sourceFile: file.name,
       fob: fobVal.toString().trim(),
-      row,
-      approved: false,
-      rejected: false
+      row
     });
   });
 
@@ -130,124 +130,121 @@ function handleParsedRows(file, rows) {
 // ==================================================
 function markFileComplete() {
   filesProcessed++;
-
   const totalFiles =
     document.getElementById("fileInput").files.length;
 
   if (filesProcessed >= totalFiles) {
-    ingestionComplete();
+    processDuplicates();
   }
 }
 
-function ingestionComplete() {
-  groupRowsByFob();
-  analyzeFobGroups();
-  renderDuplicateUI();
-
-  showStatus(
-    `✅ Loaded ${combinedRows.length} records from ${filesProcessed} files.<br>
-     🔑 Unique Fobs: ${Object.keys(fobGroups).length}<br>
-     ⚠️ Duplicate Fobs: ${duplicateFobGroups.length}`,
-    "success"
-  );
-}
-
 // ==================================================
-// FOB GROUPING + ANALYSIS
+// DUPLICATE PROCESSING (NEW BEHAVIOR)
 // ==================================================
-function groupRowsByFob() {
-  fobGroups = {};
+function processDuplicates() {
+  // Group by fob
   combinedRows.forEach(r => {
     if (!fobGroups[r.fob]) fobGroups[r.fob] = [];
     fobGroups[r.fob].push(r);
   });
-}
 
-function analyzeFobGroups() {
-  duplicateFobGroups = [];
-  uniqueFobRows = [];
+  Object.keys(fobGroups).forEach(fob => {
+    const group = fobGroups[fob];
 
-  Object.values(fobGroups).forEach(group => {
     if (group.length === 1) {
-      group[0].approved = true;
-      uniqueFobRows.push(group[0]);
+      // ✅ Valid, unique fob
+      cleanRows.push(group[0]);
     } else {
-      duplicateFobGroups.push(group);
+      // ❌ Duplicate → exclude ALL
+      const sources = [...new Set(
+        group.map(r => r.sourceFile)
+      )];
+
+      duplicateSummary.push({
+        fob,
+        occurrences: group.length,
+        sources
+      });
     }
   });
+
+  finalizeStatus();
 }
 
 // ==================================================
-// PHASE 3: DUPLICATE RESOLUTION UI
+// STATUS + ENABLE EXPORTS
 // ==================================================
-function renderDuplicateUI() {
-  const area = document.getElementById("duplicateArea");
-  area.innerHTML = "";
+function finalizeStatus() {
+  const total = combinedRows.length;
+  const accepted = cleanRows.length;
+  const skipped = duplicateSummary.reduce(
+    (sum, d) => sum + d.occurrences, 0
+  );
 
-  if (duplicateFobGroups.length === 0) {
-    document.getElementById("exportBtn").disabled = false;
-    return;
-  }
+  showStatus(
+    `✅ Files processed: ${filesProcessed}<br>
+     📦 Total records scanned: ${total}<br>
+     ✅ Included (unique fobs): ${accepted}<br>
+     ❌ Skipped (duplicate fobs): ${skipped}<br>
+     ⚠️ Duplicate fob numbers: ${duplicateSummary.length}`,
+    "success"
+  );
 
-  duplicateFobGroups.forEach((group, index) => {
-    const container = document.createElement("div");
-    container.className = "dupe-group";
+  document.getElementById("exportCleanBtn").disabled = accepted === 0;
+  document.getElementById("exportSummaryBtn").disabled =
+    duplicateSummary.length === 0;
+}
 
-    const title = document.createElement("h4");
-    title.textContent = `Fob ${group[0].fob}`;
-    container.appendChild(title);
+// ==================================================
+// EXPORT: CLEAN INVENTORY
+// ==================================================
+function exportCleanInventory() {
+  if (cleanRows.length === 0) return;
 
-    group.forEach((record, i) => {
-      const label = document.createElement("label");
-      label.style.display = "block";
+  const output = [];
+  output.push(cleanRows[0].row.map((_, i) => `Column${i+1}`));
 
-      const radio = document.createElement("input");
-      radio.type = "radio";
-      radio.name = `fob_${index}`;
-      radio.onchange = () => {
-        group.forEach(r => {
-          r.approved = false;
-          r.rejected = true;
-        });
-        record.approved = true;
-        record.rejected = false;
-        validateAllResolved();
-      };
+  cleanRows.forEach(r => output.push(r.row));
 
-      label.appendChild(radio);
-      label.append(
-        ` ${record.sourceFile} | ${record.row.join(" | ")}`
-      );
+  downloadCSV(output, "combined_inventory_clean.csv");
+}
 
-      container.appendChild(label);
-    });
+// ==================================================
+// EXPORT: DUPLICATE SUMMARY
+// ==================================================
+function exportDuplicateSummary() {
+  if (duplicateSummary.length === 0) return;
 
-    area.appendChild(container);
+  const output = [
+    ["FobNumber", "Occurrences", "SourceFiles"]
+  ];
+
+  duplicateSummary.forEach(d => {
+    output.push([
+      d.fob,
+      d.occurrences,
+      d.sources.join(" | ")
+    ]);
   });
+
+  downloadCSV(output, "duplicate_fob_summary.csv");
 }
 
 // ==================================================
-// VALIDATION
+// CSV DOWNLOAD HELPER
 // ==================================================
-function validateAllResolved() {
-  const unresolved = duplicateFobGroups.some(group =>
-    group.filter(r => r.approved).length !== 1
-  );
+function downloadCSV(data, filename) {
+  const csv = Papa.unparse(data);
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
 
-  document.getElementById("exportBtn").disabled = unresolved;
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
 }
 
 // ==================================================
-// EXPORT PLACEHOLDER (NEXT PHASE)
-// ==================================================
-function handleExport() {
-  alert(
-    "✅ All duplicate fobs resolved.\n\nNext: export logic (Phase 4)."
-  );
-}
-
-// ==================================================
-// STATUS
+// STATUS DISPLAY
 // ==================================================
 function showStatus(message, type) {
   const area = document.getElementById("statusArea");
