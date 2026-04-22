@@ -1,1 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inventory Merger & Fob Resolver</title>
 
+  <!-- Branding -->
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+  <h2>Inventory Merger & Fob Resolver</h2>
+  <p>Combine multiple inventory exports and resolve duplicate Fobs</p>
+</header>
+
+<main>
+  <h3>Upload Inventory Files</h3>
+
+  <input
+    type="file"
+    id="fileInput"
+    multiple
+    accept=".csv,.xls,.xlsx"
+  >
+
+  <button id="analyzeBtn">
+    Analyze Files
+  </button>
+
+  <div id="statusArea"></div>
+</main>
+
+<!-- CSV + Excel parsing (same libs you already trust) -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script src="script.js"></script>
+</body>
+</html>
+``
