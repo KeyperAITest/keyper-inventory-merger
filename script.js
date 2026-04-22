@@ -12,10 +12,13 @@ let uniqueFobRows = [];
 // EVENT WIRING
 // ==================================================
 document.addEventListener("DOMContentLoaded", () => {
-  const analyzeBtn = document.getElementById("analyzeBtn");
-  if (analyzeBtn) {
-    analyzeBtn.addEventListener("click", handleAnalyze);
-  }
+  document
+    .getElementById("analyzeBtn")
+    ?.addEventListener("click", handleAnalyze);
+
+  document
+    .getElementById("exportBtn")
+    ?.addEventListener("click", handleExport);
 });
 
 // ==================================================
@@ -36,13 +39,16 @@ function handleAnalyze() {
   duplicateFobGroups = [];
   uniqueFobRows = [];
 
+  document.getElementById("duplicateArea").innerHTML = "";
+  document.getElementById("exportBtn").disabled = true;
+
   showStatus(`🔄 Processing ${files.length} files...`, "info");
 
   Array.from(files).forEach(file => parseFile(file));
 }
 
 // ==================================================
-// FILE PARSING (CSV + EXCEL)
+// FILE PARSING
 // ==================================================
 function parseFile(file) {
   const ext = file.name.split(".").pop().toLowerCase();
@@ -51,14 +57,11 @@ function parseFile(file) {
     Papa.parse(file, {
       header: false,
       skipEmptyLines: true,
-      complete: result => handleParsedRows(file, result.data)
+      complete: r => handleParsedRows(file, r.data)
     });
-  }
-  else if (ext === "xls" || ext === "xlsx") {
+  } else if (ext === "xls" || ext === "xlsx") {
     parseExcelFile(file);
-  }
-  else {
-    console.warn("Unsupported file type:", file.name);
+  } else {
     markFileComplete();
   }
 }
@@ -73,7 +76,6 @@ function parseExcelFile(file) {
     );
 
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-
     const rows = XLSX.utils.sheet_to_json(sheet, {
       header: 1,
       blankrows: false
@@ -90,36 +92,31 @@ function parseExcelFile(file) {
 // ==================================================
 function handleParsedRows(file, rows) {
   if (!rows || rows.length < 2) {
-    console.warn("No usable rows in", file.name);
     markFileComplete();
     return;
   }
 
-  // Normalize headers
   const headers = rows[0].map(h =>
     h ? h.toString().toLowerCase().trim() : ""
   );
 
-  // Locate fob column (flexible matching)
   const fobIndex = headers.findIndex(h =>
     h === "fob_number" || h === "fob" || h === "fobnumber"
   );
 
   if (fobIndex === -1) {
-    console.warn("No fob column found in", file.name);
     markFileComplete();
     return;
   }
 
-  // Process data rows
   rows.slice(1).forEach(row => {
-    const fobValue = row[fobIndex];
-    if (!fobValue) return;
+    const fobVal = row[fobIndex];
+    if (!fobVal) return;
 
     combinedRows.push({
       sourceFile: file.name,
-      fob: fobValue.toString().trim(),
-      row: row,
+      fob: fobVal.toString().trim(),
+      row,
       approved: false,
       rejected: false
     });
@@ -129,7 +126,7 @@ function handleParsedRows(file, rows) {
 }
 
 // ==================================================
-// FILE COMPLETION TRACKING
+// INGESTION COMPLETE
 // ==================================================
 function markFileComplete() {
   filesProcessed++;
@@ -142,75 +139,118 @@ function markFileComplete() {
   }
 }
 
-// ==================================================
-// INGESTION COMPLETE → PHASE 2 ENTRY
-// ==================================================
 function ingestionComplete() {
-  const uniqueFobs = new Set(combinedRows.map(r => r.fob));
-
-  console.log("✅ Ingestion complete");
-  console.log("Total rows loaded:", combinedRows.length);
-  console.log("Unique fob numbers:", uniqueFobs.size);
-
-  // ---- PHASE 2 ----
   groupRowsByFob();
   analyzeFobGroups();
+  renderDuplicateUI();
 
   showStatus(
     `✅ Loaded ${combinedRows.length} records from ${filesProcessed} files.<br>
-     🔑 Unique Fobs: ${uniqueFobs.size}<br>
+     🔑 Unique Fobs: ${Object.keys(fobGroups).length}<br>
      ⚠️ Duplicate Fobs: ${duplicateFobGroups.length}`,
     "success"
   );
 }
 
 // ==================================================
-// PHASE 2: GROUP BY FOB
+// FOB GROUPING + ANALYSIS
 // ==================================================
 function groupRowsByFob() {
   fobGroups = {};
-
-  combinedRows.forEach(record => {
-    if (!fobGroups[record.fob]) {
-      fobGroups[record.fob] = [];
-    }
-    fobGroups[record.fob].push(record);
+  combinedRows.forEach(r => {
+    if (!fobGroups[r.fob]) fobGroups[r.fob] = [];
+    fobGroups[r.fob].push(r);
   });
-
-  console.log("📦 Fob groups created:", fobGroups);
 }
 
-// ==================================================
-// PHASE 2: ANALYZE GROUPS
-// ==================================================
 function analyzeFobGroups() {
   duplicateFobGroups = [];
   uniqueFobRows = [];
 
-  Object.keys(fobGroups).forEach(fob => {
-    const group = fobGroups[fob];
-
+  Object.values(fobGroups).forEach(group => {
     if (group.length === 1) {
-      // ✅ Safe auto-approval
       group[0].approved = true;
       uniqueFobRows.push(group[0]);
     } else {
-      // ⚠️ Requires human resolution later
       duplicateFobGroups.push(group);
     }
   });
-
-  console.log("✅ Auto-approved rows:", uniqueFobRows.length);
-  console.log("⚠️ Duplicate fob groups:", duplicateFobGroups.length);
-  console.log("Duplicate groups detail:", duplicateFobGroups);
 }
 
 // ==================================================
-// STATUS DISPLAY
+// PHASE 3: DUPLICATE RESOLUTION UI
+// ==================================================
+function renderDuplicateUI() {
+  const area = document.getElementById("duplicateArea");
+  area.innerHTML = "";
+
+  if (duplicateFobGroups.length === 0) {
+    document.getElementById("exportBtn").disabled = false;
+    return;
+  }
+
+  duplicateFobGroups.forEach((group, index) => {
+    const container = document.createElement("div");
+    container.className = "dupe-group";
+
+    const title = document.createElement("h4");
+    title.textContent = `Fob ${group[0].fob}`;
+    container.appendChild(title);
+
+    group.forEach((record, i) => {
+      const label = document.createElement("label");
+      label.style.display = "block";
+
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = `fob_${index}`;
+      radio.onchange = () => {
+        group.forEach(r => {
+          r.approved = false;
+          r.rejected = true;
+        });
+        record.approved = true;
+        record.rejected = false;
+        validateAllResolved();
+      };
+
+      label.appendChild(radio);
+      label.append(
+        ` ${record.sourceFile} | ${record.row.join(" | ")}`
+      );
+
+      container.appendChild(label);
+    });
+
+    area.appendChild(container);
+  });
+}
+
+// ==================================================
+// VALIDATION
+// ==================================================
+function validateAllResolved() {
+  const unresolved = duplicateFobGroups.some(group =>
+    group.filter(r => r.approved).length !== 1
+  );
+
+  document.getElementById("exportBtn").disabled = unresolved;
+}
+
+// ==================================================
+// EXPORT PLACEHOLDER (NEXT PHASE)
+// ==================================================
+function handleExport() {
+  alert(
+    "✅ All duplicate fobs resolved.\n\nNext: export logic (Phase 4)."
+  );
+}
+
+// ==================================================
+// STATUS
 // ==================================================
 function showStatus(message, type) {
   const area = document.getElementById("statusArea");
   if (!area) return;
-
   area.innerHTML = `<p class="${type}">${message}</p>`;
 }
