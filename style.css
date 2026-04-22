@@ -1,1 +1,12 @@
+.dupe-group {
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+}
 
+.dupe-group h4 {
+  margin: 0 0 8px 0;
+}
+``
