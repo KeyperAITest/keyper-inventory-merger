@@ -5,14 +5,14 @@
 
   <title>Inventory Merger – Duplicate Fob Filter</title>
 
-  <!-- ✅ Keyper Branding / Favicons -->
-  favicon.ico
-  favicon-32.png
-  favicon-16.png
-  apple-touch-icon.png
+  <!-- ✅ Favicons -->
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
   <!-- ✅ Styles -->
-  style.css
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -26,8 +26,17 @@
     border-bottom: 3px solid #0b5aa5;
     background-color: #ffffff;
   ">
-    https://KeyperSystems.com
-      KeyperLogo.webp
+    <a
+      href="https://KeyperSystems.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="display:inline-flex;align-items:center;"
+    >
+      <img
+        src="KeyperLogo.webp"
+        alt="Keyper Systems"
+        style="height:40px;"
+      >
     </a>
 
     <div>
@@ -40,19 +49,18 @@
     </div>
   </header>
 
-  <!-- ✅ Main Content -->
+  <!-- ✅ Main -->
   <main style="padding:20px;max-width:900px;">
 
-    <p style="font-size:14px;">
-      Upload inventory exports from multiple locations.  
-      The system will automatically:
+    <p>
+      Upload inventory exports from multiple locations. The system will:
     </p>
 
-    <ul style="font-size:14px;">
+    <ul>
       <li>✅ Combine all files</li>
       <li>✅ Keep only unique fob numbers</li>
       <li>❌ Remove all duplicate fobs</li>
-      <li>📄 Provide a report of skipped fobs for customer review</li>
+      <li>📄 Generate a duplicate fob report for customer review</li>
     </ul>
 
     <h3>Upload Inventory Files</h3>
@@ -64,34 +72,21 @@
       accept=".csv,.xls,.xlsx"
     >
 
-    <button
-      id="analyzeBtn"
-      style="margin-left:10px;"
-    >
+    <button id="analyzeBtn" style="margin-left:10px;">
       Analyze & Filter Files
     </button>
 
-    <!-- ✅ Status / Results -->
-    <div
-      id="statusArea"
-      style="margin-top:20px;"
-    ></div>
+    <!-- ✅ Status -->
+    <div id="statusArea" style="margin-top:20px;"></div>
 
-    <!-- ✅ Export Actions -->
+    <!-- ✅ Actions -->
     <div style="margin-top:25px;">
 
-      <button
-        id="exportCleanBtn"
-        disabled
-        style="margin-right:10px;"
-      >
+      <button id="exportCleanBtn" disabled>
         Download Clean Inventory (Import This)
       </button>
 
-      <button
-        id="exportSummaryBtn"
-        disabled
-      >
+      <button id="exportSummaryBtn" disabled style="margin-left:10px;">
         Download Duplicate Fob Report (Customer Review)
       </button>
 
@@ -99,14 +94,12 @@
 
   </main>
 
-  <!-- ✅ CSV Parsing -->
-  https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.jsscript>
-
-  <!-- ✅ Excel Parsing -->
-  https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.jsscript>
+  <!-- ✅ Libraries (MUST be before script.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <!-- ✅ App Logic -->
-  script.js
+  <script src="script.js"></script>
 
 </body>
 </html>
