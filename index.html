@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
 
-  <title>Inventory Merger & Fob Resolver</title>
+  <title>Inventory Merger – Duplicate Fob Filter</title>
 
   <!-- ✅ Keyper Branding / Favicons -->
-  <link rel="icon" href="favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  favicon.ico
+  favicon-32.png
+  favicon-16.png
+  apple-touch-icon.png
 
   <!-- ✅ Styles -->
-  <link rel="stylesheet" href="style.css">
+  style.css
 </head>
 
 <body>
@@ -26,31 +26,34 @@
     border-bottom: 3px solid #0b5aa5;
     background-color: #ffffff;
   ">
-    <a
-      href="https://KeyperSystems.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      style="display:inline-flex; align-items:center;"
-    >
-      <img
-        src="KeyperLogo.webp"
-        alt="Keyper Systems"
-        style="height: 40px; width: auto;"
-      >
+    https://KeyperSystems.com
+      KeyperLogo.webp
     </a>
 
     <div>
-      <div style="font-size: 18px; font-weight: 600;">
-        Inventory Merger & Fob Resolver
+      <div style="font-size:18px;font-weight:600;">
+        Inventory Merger – Duplicate Fob Filter
       </div>
-      <div style="font-size: 12px; color: #6a737d;">
-        Combine multiple inventory exports and resolve duplicate Fobs
+      <div style="font-size:12px;color:#6a737d;">
+        Automatically excludes duplicate fob numbers before import
       </div>
     </div>
   </header>
 
   <!-- ✅ Main Content -->
-  <main style="padding: 20px;">
+  <main style="padding:20px;max-width:900px;">
+
+    <p style="font-size:14px;">
+      Upload inventory exports from multiple locations.  
+      The system will automatically:
+    </p>
+
+    <ul style="font-size:14px;">
+      <li>✅ Combine all files</li>
+      <li>✅ Keep only unique fob numbers</li>
+      <li>❌ Remove all duplicate fobs</li>
+      <li>📄 Provide a report of skipped fobs for customer review</li>
+    </ul>
 
     <h3>Upload Inventory Files</h3>
 
@@ -61,35 +64,49 @@
       accept=".csv,.xls,.xlsx"
     >
 
-    <button id="analyzeBtn" style="margin-left:10px;">
-      Analyze Files
-    </button>
-
-    <!-- ✅ Status Area -->
-    <div id="statusArea" style="margin-top:15px;"></div>
-
-    <!-- ✅ Duplicate Resolution UI -->
-    <div id="duplicateArea" style="margin-top:25px;"></div>
-
-    <!-- ✅ Export Button -->
     <button
-      id="exportBtn"
-      disabled
-      style="margin-top:20px;"
+      id="analyzeBtn"
+      style="margin-left:10px;"
     >
-      Export Combined Inventory
+      Analyze & Filter Files
     </button>
+
+    <!-- ✅ Status / Results -->
+    <div
+      id="statusArea"
+      style="margin-top:20px;"
+    ></div>
+
+    <!-- ✅ Export Actions -->
+    <div style="margin-top:25px;">
+
+      <button
+        id="exportCleanBtn"
+        disabled
+        style="margin-right:10px;"
+      >
+        Download Clean Inventory (Import This)
+      </button>
+
+      <button
+        id="exportSummaryBtn"
+        disabled
+      >
+        Download Duplicate Fob Report (Customer Review)
+      </button>
+
+    </div>
 
   </main>
 
-  <!-- ✅ PapaParse (CSV Parsing) -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- ✅ CSV Parsing -->
+  https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.jsscript>
 
-  <!-- ✅ SheetJS (Excel Parsing) -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- ✅ Excel Parsing -->
+  https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.jsscript>
 
   <!-- ✅ App Logic -->
-  <script src="script.js"></script>
+  script.js
 
 </body>
 </html>
