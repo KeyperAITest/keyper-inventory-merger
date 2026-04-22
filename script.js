@@ -4,6 +4,10 @@
 let combinedRows = [];
 let filesProcessed = 0;
 
+let fobGroups = {};
+let duplicateFobGroups = [];
+let uniqueFobRows = [];
+
 // ==================================================
 // EVENT WIRING
 // ==================================================
@@ -28,6 +32,9 @@ function handleAnalyze() {
 
   combinedRows = [];
   filesProcessed = 0;
+  fobGroups = {};
+  duplicateFobGroups = [];
+  uniqueFobRows = [];
 
   showStatus(`🔄 Processing ${files.length} files...`, "info");
 
@@ -65,8 +72,7 @@ function parseExcelFile(file) {
       { type: "array" }
     );
 
-    const sheet =
-      workbook.Sheets[workbook.SheetNames[0]];
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
     const rows = XLSX.utils.sheet_to_json(sheet, {
       header: 1,
@@ -108,7 +114,6 @@ function handleParsedRows(file, rows) {
   // Process data rows
   rows.slice(1).forEach(row => {
     const fobValue = row[fobIndex];
-
     if (!fobValue) return;
 
     combinedRows.push({
@@ -138,23 +143,66 @@ function markFileComplete() {
 }
 
 // ==================================================
-// INGESTION COMPLETE
+// INGESTION COMPLETE → PHASE 2 ENTRY
 // ==================================================
 function ingestionComplete() {
-  const uniqueFobs = new Set(
-    combinedRows.map(r => r.fob)
-  );
+  const uniqueFobs = new Set(combinedRows.map(r => r.fob));
 
   console.log("✅ Ingestion complete");
   console.log("Total rows loaded:", combinedRows.length);
   console.log("Unique fob numbers:", uniqueFobs.size);
-  console.log("Combined rows:", combinedRows);
+
+  // ---- PHASE 2 ----
+  groupRowsByFob();
+  analyzeFobGroups();
 
   showStatus(
     `✅ Loaded ${combinedRows.length} records from ${filesProcessed} files.<br>
-     🔑 Unique Fobs: ${uniqueFobs.size}`,
+     🔑 Unique Fobs: ${uniqueFobs.size}<br>
+     ⚠️ Duplicate Fobs: ${duplicateFobGroups.length}`,
     "success"
   );
+}
+
+// ==================================================
+// PHASE 2: GROUP BY FOB
+// ==================================================
+function groupRowsByFob() {
+  fobGroups = {};
+
+  combinedRows.forEach(record => {
+    if (!fobGroups[record.fob]) {
+      fobGroups[record.fob] = [];
+    }
+    fobGroups[record.fob].push(record);
+  });
+
+  console.log("📦 Fob groups created:", fobGroups);
+}
+
+// ==================================================
+// PHASE 2: ANALYZE GROUPS
+// ==================================================
+function analyzeFobGroups() {
+  duplicateFobGroups = [];
+  uniqueFobRows = [];
+
+  Object.keys(fobGroups).forEach(fob => {
+    const group = fobGroups[fob];
+
+    if (group.length === 1) {
+      // ✅ Safe auto-approval
+      group[0].approved = true;
+      uniqueFobRows.push(group[0]);
+    } else {
+      // ⚠️ Requires human resolution later
+      duplicateFobGroups.push(group);
+    }
+  });
+
+  console.log("✅ Auto-approved rows:", uniqueFobRows.length);
+  console.log("⚠️ Duplicate fob groups:", duplicateFobGroups.length);
+  console.log("Duplicate groups detail:", duplicateFobGroups);
 }
 
 // ==================================================
