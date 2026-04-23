@@ -23,9 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   exportCleanBtn.disabled = true;
   exportSummaryBtn.disabled = true;
 
-  // -----------------------------
-  // Click-to-browse support
-  // -----------------------------
+  // Click to browse
   dropZone.addEventListener("click", () => fileInput.click());
 
   fileInput.addEventListener("change", () => {
@@ -33,9 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fileInput.value = "";
   });
 
-  // -----------------------------
-  // Drag & Drop support
-  // -----------------------------
+  // Drag & drop
   dropZone.addEventListener("dragover", e => {
     e.preventDefault();
     dropZone.style.borderColor = "#0b5aa5";
@@ -57,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==================================================
-// FILE MANAGEMENT
+// FILE COLLECTION
 // ==================================================
 function addFiles(files) {
   files.forEach(f => {
@@ -76,7 +72,7 @@ function addFiles(files) {
 }
 
 // ==================================================
-// ANALYSIS ENTRY
+// ANALYZE
 // ==================================================
 function handleAnalyze() {
   if (selectedFiles.length === 0) return;
@@ -158,7 +154,7 @@ function handleParsedRows(file, rows) {
 }
 
 // ==================================================
-// DUPLICATE PROCESSING
+// DUPLICATE HANDLING
 // ==================================================
 function markFileComplete() {
   filesProcessed++;
@@ -187,7 +183,7 @@ function processDuplicates() {
 }
 
 // ==================================================
-// STATUS + EXPORT ENABLE
+// STATUS
 // ==================================================
 function finalizeStatus() {
   showStatus(
@@ -210,15 +206,80 @@ function finalizeStatus() {
 }
 
 // ==================================================
-// EXPORTS (UNCHANGED)
+// EXPORT: CLEAN INVENTORY
 // ==================================================
-function exportCleanInventory() { /* unchanged from your current version */ }
-function exportDuplicateSummary() { /* unchanged */ }
+function exportCleanInventory() {
+  const output = [[
+    "Name",
+    "Make",
+    "Model",
+    "Year",
+    "Ext Color",
+    "Code",
+    "Int Color",
+    "VIN",
+    "Fob Number"
+  ]];
+
+  cleanRows.forEach(r => {
+    output.push([
+      r.name,
+      r.make,
+      r.model,
+      r.year,
+      r.extColor,
+      r.code,
+      r.intColor,
+      r.vin,
+      r.fob
+    ]);
+  });
+
+  downloadCSV(output, "import_ready_inventory_with_fob.csv");
+}
 
 // ==================================================
-// UTIL
+// EXPORT: DUPLICATE SUMMARY
 // ==================================================
+function exportDuplicateSummary() {
+  if (duplicateSummary.length === 0) return;
+
+  const maxAssets = Math.max(
+    ...duplicateSummary.map(d => d.assetNames.length)
+  );
+
+  const header = [];
+  for (let i = 0; i < maxAssets; i++) {
+    header.push(`Asset Name ${i + 1}`);
+  }
+  header.push("Fob Number", "Source Files");
+
+  const output = [header];
+
+  duplicateSummary.forEach(d => {
+    const row = [...d.assetNames];
+    while (row.length < maxAssets) row.push("");
+    row.push(d.fob);
+    row.push(d.sources.join(" | "));
+    output.push(row);
+  });
+
+  downloadCSV(output, "duplicate_fob_summary.csv");
+}
+
+// ==================================================
+// UTILITIES
+// ==================================================
+function downloadCSV(data, filename) {
+  const blob = new Blob([Papa.unparse(data)], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
 function showStatus(msg, type) {
   document.getElementById("statusArea").innerHTML =
     `<p class="${type}">${msg}</p>`;
 }
+``
