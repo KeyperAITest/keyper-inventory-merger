@@ -222,4 +222,3 @@ function showStatus(msg, type) {
   document.getElementById("statusArea").innerHTML =
     `<p class="${type}">${msg}</p>`;
 }
-``
