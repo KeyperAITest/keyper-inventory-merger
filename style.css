@@ -1,13 +1,13 @@
 /* ==================================================
    GLOBAL BASE STYLES
-   Matches User & Inventory Import Formatters
+   Font parity only – NO theme enforcement
    ================================================== */
 
 body {
   margin: 0;
   padding: 0;
 
-  /* ✅ FONT PARITY FIX */
+  /* ✅ Matches User & Inventory Import Formatters */
   font-family:
     "Segoe UI",
     -apple-system,
@@ -18,9 +18,6 @@ body {
 
   font-size: 14px;
   line-height: 1.4;
-
-  background-color: #0f1419;
-  color: #ffffff;
 }
 
 /* ==================================================
@@ -51,30 +48,14 @@ li {
 }
 
 /* ==================================================
-   HEADER BAR
-   ================================================== */
-
-header {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-/* ==================================================
-   BUTTONS
+   BUTTONS (neutral – inherit theme)
    ================================================== */
 
 button {
-  background-color: #2d2f32;
-  color: #ffffff;
-  border: 1px solid #3a3d40;
-  border-radius: 4px;
-  padding: 6px 12px;
   font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 4px;
   cursor: pointer;
-}
-
-button:hover:enabled {
-  background-color: #3a3d40;
 }
 
 button:disabled {
@@ -91,30 +72,22 @@ input[type="file"] {
 }
 
 /* ==================================================
-   STATUS / MESSAGES
+   STATUS TEXT
    ================================================== */
 
-.success {
-  color: #d1fae5;
-}
-
-.error {
-  color: #fecaca;
-}
-
-.info {
-  color: #e5e7eb;
-}
+.success { }
+.error { }
+.info { }
 
 /* ==================================================
-   UTILITY
+   LINKS
    ================================================== */
 
 a {
-  color: #0b5aa5;
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
 }
+``
