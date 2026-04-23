@@ -64,7 +64,10 @@ function parseFile(file) {
     reader.onload = e => {
       const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      handleParsedRows(file, XLSX.utils.sheet_to_json(sheet, { defval: "" }));
+      handleParsedRows(
+        file,
+        XLSX.utils.sheet_to_json(sheet, { defval: "" })
+      );
     };
     reader.readAsArrayBuffer(file);
   } else {
@@ -131,7 +134,6 @@ function processDuplicates() {
     } else {
       duplicateSummary.push({
         fob,
-        occurrences: group.length,
         sources: [...new Set(group.map(r => r.sourceFile))],
         assetNames: group.map(r => r.name)
       });
@@ -150,18 +152,20 @@ function finalizeStatus() {
      📦 Total records scanned: ${combinedRows.length}<br>
      ✅ Included (unique fobs): ${cleanRows.length}<br>
      ❌ Skipped (duplicate fobs): ${
-       duplicateSummary.reduce((s, d) => s + d.occurrences, 0)
+       duplicateSummary.reduce((sum, d) => sum + d.assetNames.length, 0)
      }<br>
      ⚠️ Duplicate fob numbers: ${duplicateSummary.length}`,
     "success"
   );
 
-  document.getElementById("exportCleanBtn").disabled = cleanRows.length === 0;
-  document.getElementById("exportSummaryBtn").disabled = duplicateSummary.length === 0;
+  document.getElementById("exportCleanBtn").disabled =
+    cleanRows.length === 0;
+  document.getElementById("exportSummaryBtn").disabled =
+    duplicateSummary.length === 0;
 }
 
 // ==================================================
-// EXPORT: CLEAN INVENTORY (SCHEMA-PARITY)
+// EXPORT: CLEAN INVENTORY (SCHEMA PARITY)
 // ==================================================
 function exportCleanInventory() {
   const output = [[
@@ -194,18 +198,29 @@ function exportCleanInventory() {
 }
 
 // ==================================================
-// EXPORT: DUPLICATE SUMMARY
+// EXPORT: DUPLICATE FOB SUMMARY (ASSET-FIRST)
 // ==================================================
 function exportDuplicateSummary() {
-  const output = [["FobNumber", "Occurrences", "SourceFiles", "AssetNames"]];
+  if (duplicateSummary.length === 0) return;
+
+  const maxAssets = Math.max(
+    ...duplicateSummary.map(d => d.assetNames.length)
+  );
+
+  const header = [];
+  for (let i = 0; i < maxAssets; i++) {
+    header.push(`Asset Name ${i + 1}`);
+  }
+  header.push("Fob Number", "Source Files");
+
+  const output = [header];
 
   duplicateSummary.forEach(d => {
-    output.push([
-      d.fob,
-      d.occurrences,
-      d.sources.join(" | "),
-      d.assetNames.join(" | ")
-    ]);
+    const row = [...d.assetNames];
+    while (row.length < maxAssets) row.push("");
+    row.push(d.fob);
+    row.push(d.sources.join(" | "));
+    output.push(row);
   });
 
   downloadCSV(output, "duplicate_fob_summary.csv");
