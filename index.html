@@ -5,56 +5,51 @@
 
   <title>Inventory Merger – Duplicate Fob Filter</title>
 
-  <!-- ✅ Favicons -->
+  <!-- Favicons -->
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-  <!-- ✅ Styles -->
+  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- ✅ Header -->
-<header style="
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 20px;
-  border-bottom: 3px solid #0b5aa5;
-  background-color: #ffffff;
-">
-
-  <!-- ✅ Keyper Logo -->
-  <a
-    href="https://KeyperSystems.com"
-    target="_blank"
-    rel="noopener noreferrer"
-    title="Visit Keyper Systems"
-    style="display:inline-flex; align-items:center;"
-  >
-    <img
-      src="KeyperLogo.webp"
-      alt="Keyper Systems"
-      style="height:40px; width:auto; display:block;"
+  <!-- Header -->
+  <header style="
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    border-bottom: 3px solid #0b5aa5;
+    background-color: #ffffff;
+  ">
+    <a
+      href="https://KeyperSystems.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="display:inline-flex;align-items:center;"
     >
-  </a>
+      <img
+        src="KeyperLogo.webp"
+        alt="Keyper Systems"
+        style="height:40px;width:auto;"
+      >
+    </a>
 
-  <!-- ✅ Title -->
-  <div>
-    <div style="font-size:18px; font-weight:600;">
-      Inventory Merger – Duplicate Fob Filter
+    <div>
+      <div style="font-size:18px;font-weight:600;">
+        Inventory Merger – Duplicate Fob Filter
+      </div>
+      <div style="font-size:12px;color:#6a737d;">
+        Automatically excludes duplicate fob numbers before import
+      </div>
     </div>
-    <div style="font-size:12px; color:#6a737d;">
-      Automatically excludes duplicate fob numbers before import
-    </div>
-  </div>
+  </header>
 
-</header>
-
-  <!-- ✅ Main -->
+  <!-- Main Content -->
   <main style="padding:20px;max-width:900px;">
 
     <p>
@@ -70,23 +65,42 @@
 
     <h3>Upload Inventory Files</h3>
 
-    <input
-      type="file"
-      id="fileInput"
-      multiple
-      accept=".csv,.xls,.xlsx"
+    <!-- Drag & Drop Zone -->
+    <div
+      id="dropZone"
+      style="
+        border: 2px dashed #aaa;
+        padding: 20px;
+        border-radius: 6px;
+        text-align: center;
+        margin-bottom: 12px;
+        cursor: pointer;
+      "
     >
+      <strong>Drag & drop inventory files here</strong><br>
+      <span style="font-size:12px;">
+        or click to browse (CSV, XLS, XLSX)
+      </span>
 
+      <input
+        type="file"
+        id="fileInput"
+        multiple
+        accept=".csv,.xls,.xlsx"
+        style="display:none;"
+      >
+    </div>
+
+    <!-- Analyze -->
     <button id="analyzeBtn" disabled>
-     Analyze & Filter Files
+      Analyze &amp; Filter Files
     </button>
 
-    <!-- ✅ Status -->
+    <!-- Status -->
     <div id="statusArea" style="margin-top:20px;"></div>
 
-    <!-- ✅ Actions -->
+    <!-- Download Actions -->
     <div style="margin-top:25px;">
-
       <button id="exportCleanBtn" disabled>
         Download Clean Inventory (Import This)
       </button>
@@ -94,16 +108,15 @@
       <button id="exportSummaryBtn" disabled style="margin-left:10px;">
         Download Duplicate Fob Report (Customer Review)
       </button>
-
     </div>
 
   </main>
 
-  <!-- ✅ Libraries (MUST be before script.js) -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <!-- ✅ App Logic -->
+  <!-- App Logic -->
   <script src="script.js"></script>
 
 </body>
