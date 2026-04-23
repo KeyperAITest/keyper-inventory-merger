@@ -62,13 +62,9 @@ function addFiles(files) {
     }
   });
 
-  document.getElementById("analyzeBtn").disabled =
-    selectedFiles.length === 0;
+  document.getElementById("analyzeBtn").disabled = selectedFiles.length === 0;
 
-  showStatus(
-    `✅ ${selectedFiles.length} file(s) ready for analysis.`,
-    "info"
-  );
+  showStatus(`✅ ${selectedFiles.length} file(s) ready for analysis.`, "info");
 }
 
 // ==================================================
@@ -86,10 +82,7 @@ function handleAnalyze() {
   document.getElementById("exportCleanBtn").disabled = true;
   document.getElementById("exportSummaryBtn").disabled = true;
 
-  showStatus(
-    `🔄 Analyzing ${selectedFiles.length} file(s)...`,
-    "info"
-  );
+  showStatus(`🔄 Analyzing ${selectedFiles.length} file(s)...`, "info");
 
   selectedFiles.forEach(parseFile);
 }
@@ -111,10 +104,7 @@ function parseFile(file) {
     reader.onload = e => {
       const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      handleParsedRows(
-        file,
-        XLSX.utils.sheet_to_json(sheet, { defval: "" })
-      );
+      handleParsedRows(file, XLSX.utils.sheet_to_json(sheet, { defval: "" }));
     };
     reader.readAsArrayBuffer(file);
   } else {
@@ -190,19 +180,12 @@ function finalizeStatus() {
     `✅ Files processed: ${selectedFiles.length}<br>
      📦 Records scanned: ${combinedRows.length}<br>
      ✅ Included: ${cleanRows.length}<br>
-     ❌ Skipped duplicates: ${
-       duplicateSummary.reduce(
-         (s, d) => s + d.assetNames.length,
-         0
-       )
-     }`,
+     ❌ Skipped duplicates: ${duplicateSummary.reduce((s, d) => s + d.assetNames.length, 0)}`,
     "success"
   );
 
-  document.getElementById("exportCleanBtn").disabled =
-    cleanRows.length === 0;
-  document.getElementById("exportSummaryBtn").disabled =
-    duplicateSummary.length === 0;
+  document.getElementById("exportCleanBtn").disabled = cleanRows.length === 0;
+  document.getElementById("exportSummaryBtn").disabled = duplicateSummary.length === 0;
 }
 
 // ==================================================
@@ -244,9 +227,7 @@ function exportCleanInventory() {
 function exportDuplicateSummary() {
   if (duplicateSummary.length === 0) return;
 
-  const maxAssets = Math.max(
-    ...duplicateSummary.map(d => d.assetNames.length)
-  );
+  const maxAssets = Math.max(...duplicateSummary.map(d => d.assetNames.length));
 
   const header = [];
   for (let i = 0; i < maxAssets; i++) {
@@ -279,7 +260,5 @@ function downloadCSV(data, filename) {
 }
 
 function showStatus(msg, type) {
-  document.getElementById("statusArea").innerHTML =
-    `<p class="${type}">${msg}</p>`;
+  document.getElementById("statusArea").innerHTML = `<p class="${type}">${msg}</p>`;
 }
-``
