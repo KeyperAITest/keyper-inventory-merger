@@ -3,7 +3,6 @@
 // ==================================================
 let combinedRows = [];
 let filesProcessed = 0;
-let selectedFiles = [];
 
 let fobGroups = {};
 let cleanRows = [];
@@ -14,37 +13,18 @@ let duplicateSummary = [];
 // ==================================================
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("fileInput");
-  const dropZone = document.getElementById("dropZone");
   const analyzeBtn = document.getElementById("analyzeBtn");
   const exportCleanBtn = document.getElementById("exportCleanBtn");
   const exportSummaryBtn = document.getElementById("exportSummaryBtn");
 
+  // ✅ Start with Analyze disabled
   analyzeBtn.disabled = true;
   exportCleanBtn.disabled = true;
   exportSummaryBtn.disabled = true;
 
-  // Click to browse
-  dropZone.addEventListener("click", () => fileInput.click());
-
+  // ✅ Enable Analyze when files are selected
   fileInput.addEventListener("change", () => {
-    addFiles([...fileInput.files]);
-    fileInput.value = "";
-  });
-
-  // Drag & drop
-  dropZone.addEventListener("dragover", e => {
-    e.preventDefault();
-    dropZone.style.borderColor = "#0b5aa5";
-  });
-
-  dropZone.addEventListener("dragleave", () => {
-    dropZone.style.borderColor = "#aaa";
-  });
-
-  dropZone.addEventListener("drop", e => {
-    e.preventDefault();
-    dropZone.style.borderColor = "#aaa";
-    addFiles([...e.dataTransfer.files]);
+    analyzeBtn.disabled = fileInput.files.length === 0;
   });
 
   analyzeBtn.addEventListener("click", handleAnalyze);
@@ -53,25 +33,15 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==================================================
-// FILE COLLECTION
-// ==================================================
-function addFiles(files) {
-  files.forEach(f => {
-    if (!selectedFiles.some(sf => sf.name === f.name && sf.size === f.size)) {
-      selectedFiles.push(f);
-    }
-  });
-
-  document.getElementById("analyzeBtn").disabled = selectedFiles.length === 0;
-
-  showStatus(`✅ ${selectedFiles.length} file(s) ready for analysis.`, "info");
-}
-
-// ==================================================
-// ANALYZE
+// MAIN ENTRY
 // ==================================================
 function handleAnalyze() {
-  if (selectedFiles.length === 0) return;
+  const files = document.getElementById("fileInput").files;
+
+  if (!files || files.length === 0) {
+    showStatus("❌ Please select at least one file.", "error");
+    return;
+  }
 
   combinedRows = [];
   filesProcessed = 0;
@@ -82,9 +52,9 @@ function handleAnalyze() {
   document.getElementById("exportCleanBtn").disabled = true;
   document.getElementById("exportSummaryBtn").disabled = true;
 
-  showStatus(`🔄 Analyzing ${selectedFiles.length} file(s)...`, "info");
+  showStatus(`🔄 Analyzing ${files.length} file(s)...`, "info");
 
-  selectedFiles.forEach(parseFile);
+  Array.from(files).forEach(parseFile);
 }
 
 // ==================================================
@@ -102,9 +72,15 @@ function parseFile(file) {
   } else if (ext === "xls" || ext === "xlsx") {
     const reader = new FileReader();
     reader.onload = e => {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+      const wb = XLSX.read(
+        new Uint8Array(e.target.result),
+        { type: "array" }
+      );
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      handleParsedRows(file, XLSX.utils.sheet_to_json(sheet, { defval: "" }));
+      handleParsedRows(
+        file,
+        XLSX.utils.sheet_to_json(sheet, { defval: "" })
+      );
     };
     reader.readAsArrayBuffer(file);
   } else {
@@ -113,29 +89,31 @@ function parseFile(file) {
 }
 
 // ==================================================
-// NORMALIZATION
+// NORMALIZATION + REQUIRED FIELD ENFORCEMENT
 // ==================================================
 function handleParsedRows(file, rows) {
   rows.forEach(row => {
-    const name = row["Name"] || row["name"];
+    const name = row["Name"] || row["name"] || "";
     const fob =
       row["Fob Number"] ||
       row["fob_number"] ||
       row["FobNumber"] ||
-      row["fob"];
+      row["fob"] ||
+      "";
 
+    // ✅ REQUIRED: Name + Fob Number
     if (!name || !fob) return;
 
     combinedRows.push({
       sourceFile: file.name,
       name: name.toString().trim(),
-      make: row["Make"] || "",
-      model: row["Model"] || "",
-      year: row["Year"] || "",
-      extColor: row["Ext Color"] || "",
+      make: row["Make"] || row["Make_att"] || "",
+      model: row["Model"] || row["Model_att"] || "",
+      year: row["Year"] || row["Year_att"] || "",
+      extColor: row["Ext Color"] || row["Ext. Color_att"] || "",
       code: row["Code"] || "",
-      intColor: row["Int Color"] || "",
-      vin: row["VIN"] || "",
+      intColor: row["Int Color"] || row["Int. Color_att"] || "",
+      vin: row["VIN"] || row["VIN_att"] || "",
       fob: fob.toString().trim()
     });
   });
@@ -144,25 +122,31 @@ function handleParsedRows(file, rows) {
 }
 
 // ==================================================
-// DUPLICATE HANDLING
+// INGESTION COMPLETE
 // ==================================================
 function markFileComplete() {
   filesProcessed++;
-  if (filesProcessed >= selectedFiles.length) processDuplicates();
+  const total = document.getElementById("fileInput").files.length;
+  if (filesProcessed >= total) processDuplicates();
 }
 
+// ==================================================
+// DUPLICATE FOB FILTERING
+// ==================================================
 function processDuplicates() {
   combinedRows.forEach(r => {
     if (!fobGroups[r.fob]) fobGroups[r.fob] = [];
     fobGroups[r.fob].push(r);
   });
 
-  Object.values(fobGroups).forEach(group => {
+  Object.keys(fobGroups).forEach(fob => {
+    const group = fobGroups[fob];
+
     if (group.length === 1) {
       cleanRows.push(group[0]);
     } else {
       duplicateSummary.push({
-        fob: group[0].fob,
+        fob,
         sources: [...new Set(group.map(r => r.sourceFile))],
         assetNames: group.map(r => r.name)
       });
@@ -173,23 +157,31 @@ function processDuplicates() {
 }
 
 // ==================================================
-// STATUS
+// STATUS + ENABLE DOWNLOADS
 // ==================================================
 function finalizeStatus() {
   showStatus(
-    `✅ Files processed: ${selectedFiles.length}<br>
-     📦 Records scanned: ${combinedRows.length}<br>
-     ✅ Included: ${cleanRows.length}<br>
-     ❌ Skipped duplicates: ${duplicateSummary.reduce((s, d) => s + d.assetNames.length, 0)}`,
+    `✅ Files processed: ${filesProcessed}<br>
+     📦 Total records scanned: ${combinedRows.length}<br>
+     ✅ Included (unique fobs): ${cleanRows.length}<br>
+     ❌ Skipped (duplicate fobs): ${
+       duplicateSummary.reduce(
+         (sum, d) => sum + d.assetNames.length,
+         0
+       )
+     }<br>
+     ⚠️ Duplicate fob numbers: ${duplicateSummary.length}`,
     "success"
   );
 
-  document.getElementById("exportCleanBtn").disabled = cleanRows.length === 0;
-  document.getElementById("exportSummaryBtn").disabled = duplicateSummary.length === 0;
+  document.getElementById("exportCleanBtn").disabled =
+    cleanRows.length === 0;
+  document.getElementById("exportSummaryBtn").disabled =
+    duplicateSummary.length === 0;
 }
 
 // ==================================================
-// EXPORT: CLEAN INVENTORY
+// EXPORT: CLEAN INVENTORY (SCHEMA PARITY)
 // ==================================================
 function exportCleanInventory() {
   const output = [[
@@ -222,12 +214,14 @@ function exportCleanInventory() {
 }
 
 // ==================================================
-// EXPORT: DUPLICATE SUMMARY
+// EXPORT: DUPLICATE FOB SUMMARY (ASSET‑FIRST)
 // ==================================================
 function exportDuplicateSummary() {
   if (duplicateSummary.length === 0) return;
 
-  const maxAssets = Math.max(...duplicateSummary.map(d => d.assetNames.length));
+  const maxAssets = Math.max(
+    ...duplicateSummary.map(d => d.assetNames.length)
+  );
 
   const header = [];
   for (let i = 0; i < maxAssets; i++) {
@@ -252,13 +246,16 @@ function exportDuplicateSummary() {
 // UTILITIES
 // ==================================================
 function downloadCSV(data, filename) {
-  const blob = new Blob([Papa.unparse(data)], { type: "text/csv" });
+  const blob = new Blob([Papa.unparse(data)], {
+    type: "text/csv"
+  });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
 }
 
-function showStatus(msg, type) {
-  document.getElementById("statusArea").innerHTML = `<p class="${type}">${msg}</p>`;
+function showStatus(message, type) {
+  document.getElementById("statusArea").innerHTML =
+    `<p class="${type}">${message}</p>`;
 }
