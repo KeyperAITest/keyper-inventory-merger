@@ -108,3 +108,15 @@ a {
 a:hover {
   text-decoration: underline;
 }
+/* ==================================================
+   DISABLED BUTTON VISIBILITY FIX (Chrome)
+   ================================================== */
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+
+  /* ✅ Keep button visible in Chrome */
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  background-color: transparent;
+}
