@@ -12,21 +12,31 @@ let duplicateSummary = [];
 // EVENT WIRING
 // ==================================================
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("analyzeBtn")
-    ?.addEventListener("click", handleAnalyze);
+  const fileInput = document.getElementById("fileInput");
+  const analyzeBtn = document.getElementById("analyzeBtn");
+  const exportCleanBtn = document.getElementById("exportCleanBtn");
+  const exportSummaryBtn = document.getElementById("exportSummaryBtn");
 
-  document.getElementById("exportCleanBtn")
-    ?.addEventListener("click", exportCleanInventory);
+  // ✅ Start with Analyze disabled
+  analyzeBtn.disabled = true;
+  exportCleanBtn.disabled = true;
+  exportSummaryBtn.disabled = true;
 
-  document.getElementById("exportSummaryBtn")
-    ?.addEventListener("click", exportDuplicateSummary);
+  // ✅ Enable Analyze when files are selected
+  fileInput.addEventListener("change", () => {
+    analyzeBtn.disabled = fileInput.files.length === 0;
+  });
+
+  analyzeBtn.addEventListener("click", handleAnalyze);
+  exportCleanBtn.addEventListener("click", exportCleanInventory);
+  exportSummaryBtn.addEventListener("click", exportDuplicateSummary);
 });
 
 // ==================================================
 // MAIN ENTRY
 // ==================================================
 function handleAnalyze() {
-  const files = document.getElementById("fileInput")?.files;
+  const files = document.getElementById("fileInput").files;
 
   if (!files || files.length === 0) {
     showStatus("❌ Please select at least one file.", "error");
@@ -62,7 +72,10 @@ function parseFile(file) {
   } else if (ext === "xls" || ext === "xlsx") {
     const reader = new FileReader();
     reader.onload = e => {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+      const wb = XLSX.read(
+        new Uint8Array(e.target.result),
+        { type: "array" }
+      );
       const sheet = wb.Sheets[wb.SheetNames[0]];
       handleParsedRows(
         file,
@@ -144,7 +157,7 @@ function processDuplicates() {
 }
 
 // ==================================================
-// STATUS
+// STATUS + ENABLE DOWNLOADS
 // ==================================================
 function finalizeStatus() {
   showStatus(
@@ -152,7 +165,10 @@ function finalizeStatus() {
      📦 Total records scanned: ${combinedRows.length}<br>
      ✅ Included (unique fobs): ${cleanRows.length}<br>
      ❌ Skipped (duplicate fobs): ${
-       duplicateSummary.reduce((sum, d) => sum + d.assetNames.length, 0)
+       duplicateSummary.reduce(
+         (sum, d) => sum + d.assetNames.length,
+         0
+       )
      }<br>
      ⚠️ Duplicate fob numbers: ${duplicateSummary.length}`,
     "success"
@@ -198,7 +214,7 @@ function exportCleanInventory() {
 }
 
 // ==================================================
-// EXPORT: DUPLICATE FOB SUMMARY (ASSET-FIRST)
+// EXPORT: DUPLICATE FOB SUMMARY (ASSET‑FIRST)
 // ==================================================
 function exportDuplicateSummary() {
   if (duplicateSummary.length === 0) return;
@@ -230,14 +246,16 @@ function exportDuplicateSummary() {
 // UTILITIES
 // ==================================================
 function downloadCSV(data, filename) {
-  const blob = new Blob([Papa.unparse(data)], { type: "text/csv" });
+  const blob = new Blob([Papa.unparse(data)], {
+    type: "text/csv"
+  });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
 }
 
-function showStatus(msg, type) {
+function showStatus(message, type) {
   document.getElementById("statusArea").innerHTML =
-    `<p class="${type}">${msg}</p>`;
+    `<p class="${type}">${message}</p>`;
 }
