@@ -120,3 +120,19 @@ button:disabled {
   border: 1px solid rgba(0, 0, 0, 0.35);
   background-color: transparent;
 }
+
+/* ==================================================
+   BUTTON PARITY – ALWAYS SHOW BUTTON AFFORDANCE
+   ================================================== */
+
+/* Base button style – applies to enabled AND disabled */
+button {
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  background-color: transparent;
+}
+
+/* Disabled state – visually muted but still obvious */
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
