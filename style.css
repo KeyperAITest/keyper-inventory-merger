@@ -1,12 +1,120 @@
-.dupe-group {
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  background: #f6f8fa;
+/* ==================================================
+   GLOBAL BASE STYLES
+   Matches User & Inventory Import Formatters
+   ================================================== */
+
+body {
+  margin: 0;
+  padding: 0;
+
+  /* ✅ FONT PARITY FIX */
+  font-family:
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+
+  font-size: 14px;
+  line-height: 1.4;
+
+  background-color: #0f1419;
+  color: #ffffff;
 }
 
-.dupe-group h4 {
-  margin: 0 0 8px 0;
+/* ==================================================
+   HEADERS & TEXT
+   ================================================== */
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 600;
 }
-``
+
+h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+p {
+  margin: 8px 0;
+}
+
+ul {
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+li {
+  margin-bottom: 6px;
+}
+
+/* ==================================================
+   HEADER BAR
+   ================================================== */
+
+header {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* ==================================================
+   BUTTONS
+   ================================================== */
+
+button {
+  background-color: #2d2f32;
+  color: #ffffff;
+  border: 1px solid #3a3d40;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button:hover:enabled {
+  background-color: #3a3d40;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ==================================================
+   FILE INPUT
+   ================================================== */
+
+input[type="file"] {
+  font-size: 13px;
+}
+
+/* ==================================================
+   STATUS / MESSAGES
+   ================================================== */
+
+.success {
+  color: #d1fae5;
+}
+
+.error {
+  color: #fecaca;
+}
+
+.info {
+  color: #e5e7eb;
+}
+
+/* ==================================================
+   UTILITY
+   ================================================== */
+
+a {
+  color: #0b5aa5;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
